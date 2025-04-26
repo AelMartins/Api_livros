@@ -1,18 +1,11 @@
-// src/routes/userRoutes.js
 const express = require('express');
 const db = require('../config/db');
-// const authMiddleware = require('../middleware/authMiddleware'); // <<< DESCOMENTE QUANDO TIVER AUTENTICAÇÃO
 
 const router = express.Router();
 
-// --- ROTA PARA LISTAR USUÁRIOS (com paginação) ---
-// IMPORTANTE: Em uma aplicação real, esta rota DEVE ser protegida
-//             para que apenas administradores possam acessá-la.
 router.get(
     '/',
-    // authMiddleware, // <<< Adicionar middleware de autenticação aqui depois
     async (req, res) => {
-        // Adiciona um aviso sobre segurança no console do servidor
         console.warn("AVISO DE SEGURANÇA: Endpoint GET /api/users acessado sem verificação de admin.");
 
         const page = parseInt(req.query.page) || 1;
@@ -20,7 +13,6 @@ router.get(
         const offset = (page - 1) * limit;
 
         try {
-            // Busca usuários paginados - NÃO INCLUA o password_hash!
             const usersQuery = `
                 SELECT id, username, email, created_at
                 FROM users
@@ -29,7 +21,6 @@ router.get(
             `;
             const usersResult = await db.query(usersQuery, [limit, offset]);
 
-            // Conta o total de usuários para paginação
             const countQuery = 'SELECT COUNT(*) FROM users;';
             const countResult = await db.query(countQuery);
             const totalUsers = parseInt(countResult.rows[0].count);
@@ -52,26 +43,18 @@ router.get(
     }
 );
 
-// --- ROTA PARA BUSCAR UM USUÁRIO ESPECÍFICO POR ID ---
-// IMPORTANTE: Em uma aplicação real, proteja esta rota.
-//             Um usuário comum só deveria poder ver seu próprio perfil,
-//             ou um admin poderia ver qualquer perfil.
 router.get(
     '/:id',
-    // authMiddleware, // <<< Adicionar middleware de autenticação aqui depois
     async (req, res) => {
         const { id } = req.params;
-        // Adiciona um aviso sobre segurança no console do servidor
         console.warn(`AVISO DE SEGURANÇA: Endpoint GET /api/users/${id} acessado sem verificação de permissão.`);
 
 
-        // Validação básica do ID
         if (isNaN(parseInt(id)) || parseInt(id) <= 0) {
             return res.status(400).json({ error: 'ID de usuário inválido.' });
         }
 
         try {
-            // Busca usuário pelo ID - NÃO INCLUA o password_hash!
             const userQuery = `
                 SELECT id, username, email, created_at
                 FROM users
@@ -83,7 +66,6 @@ router.get(
                 return res.status(404).json({ error: 'Usuário não encontrado.' });
             }
 
-            // Retorna os dados do usuário (sem a senha)
             res.json(userResult.rows[0]);
 
         } catch (err) {
@@ -94,10 +76,8 @@ router.get(
 );
 
 
-// --- ROTA PARA BUSCAR OS FAVORITOS DE UM USUÁRIO ---
-// Esta rota pode ser pública ou protegida dependendo da sua lógica
 router.get(
-    '/:id/favorites', // Pega livros e gêneros favoritos
+    '/:id/favorites', 
     async (req, res) => {
          const { id } = req.params;
          if (isNaN(parseInt(id)) || parseInt(id) <= 0) {
@@ -105,13 +85,11 @@ router.get(
          }
 
          try {
-            // Verifica se o usuário existe
              const userExists = await db.query('SELECT id FROM users WHERE id = $1', [id]);
              if (userExists.rows.length === 0) {
                  return res.status(404).json({ error: 'Usuário não encontrado.' });
              }
 
-             // Busca livros favoritos
              const favBooksQuery = `
                 SELECT b.id, b.title, b.authors, b.image
                 FROM books b
@@ -121,7 +99,6 @@ router.get(
              `;
              const favBooksResult = await db.query(favBooksQuery, [id]);
 
-             // Busca gêneros favoritos
              const favGenresQuery = `
                  SELECT g.id, g.name
                  FROM genres g

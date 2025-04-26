@@ -1,6 +1,5 @@
-// src/config/db.js
 const { Pool } = require('pg');
-require('dotenv').config(); // Carrega variáveis de ambiente
+require('dotenv').config(); 
 
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -11,6 +10,6 @@ const pool = new Pool({
 });
 
 module.exports = {
-    query: (text, params) => pool.query(text, params), // Exporta um método para fazer queries
-    pool: pool // Exporta o pool se precisar de mais controle
+    query: (text, params) => pool.query(text, params), 
+    pool: pool 
 };

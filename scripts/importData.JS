@@ -1,14 +1,11 @@
-// scripts/importData.js
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
 const { Pool } = require('pg');
 
-// Carrega variáveis de ambiente do arquivo .env na raiz do projeto
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 
-// --- Validação das Variáveis de Ambiente ---
 function validateEnvVariables() {
     const requiredVars = ['DB_USER', 'DB_HOST', 'DB_DATABASE', 'DB_PASSWORD', 'DB_PORT'];
     const missingVars = requiredVars.filter(v => !(v in process.env));
@@ -25,23 +22,18 @@ function validateEnvVariables() {
         process.exit(1);
     }
 }
-validateEnvVariables(); // Executa a validação
-
-// --- Configuração do Pool de Conexões ---
+validateEnvVariables(); 
 const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_DATABASE,
     password: process.env.DB_PASSWORD,
     port: parseInt(process.env.DB_PORT, 10),
-    // statement_timeout: 600000, // Timeout para queries longas (10 min), descomente se necessário
 });
 
-// Mapa para guardar o ID do livro associado ao seu TÍTULO
 const bookTitleToIdMap = new Map();
 
-// --- Nomes das Colunas nos Arquivos CSV ---
-// !! CONFIRA E AJUSTE ESTES NOMES CONFORME SEUS ARQUIVOS !!
+
 const BOOK_TITLE_COLUMN_IN_BOOKS_CSV = 'Title';
 const BOOK_AUTHORS_COLUMN_IN_BOOKS_CSV = 'authors';
 const BOOK_DESCRIPTION_COLUMN_IN_BOOKS_CSV = 'description';
@@ -51,11 +43,11 @@ const BOOK_PUBLISHER_COLUMN_IN_BOOKS_CSV = 'publisher';
 const BOOK_PUBLISHEDDATE_COLUMN_IN_BOOKS_CSV = 'publishedDate';
 const BOOK_INFOLINK_COLUMN_IN_BOOKS_CSV = 'infoLink';
 const BOOK_CATEGORIES_COLUMN_IN_BOOKS_CSV = 'categories';
-const BOOK_RATINGSCOUNT_COLUMN_IN_BOOKS_CSV = 'ratingsCount'; // Pode não ser usado, já que calculamos
+const BOOK_RATINGSCOUNT_COLUMN_IN_BOOKS_CSV = 'ratingsCount'; 
 
 const REVIEW_ID_COLUMN_IN_REVIEWS_CSV = 'Id';
 const REVIEW_TITLE_COLUMN_IN_REVIEWS_CSV = 'Title';
-const REVIEW_PRICE_COLUMN_IN_REVIEWS_CSV = 'Price'; // Usado para popular 'original_price_text'
+const REVIEW_PRICE_COLUMN_IN_REVIEWS_CSV = 'Price';
 const REVIEW_USERID_COLUMN_IN_REVIEWS_CSV = 'User_id';
 const REVIEW_PROFILENAME_COLUMN_IN_REVIEWS_CSV = 'profileName';
 const REVIEW_HELPFULNESS_COLUMN_IN_REVIEWS_CSV = 'review/helpfulness';
@@ -63,16 +55,13 @@ const REVIEW_SCORE_COLUMN_IN_REVIEWS_CSV = 'review/score';
 const REVIEW_TIME_COLUMN_IN_REVIEWS_CSV = 'review/time';
 const REVIEW_SUMMARY_COLUMN_IN_REVIEWS_CSV = 'review/summary';
 const REVIEW_TEXT_COLUMN_IN_REVIEWS_CSV = 'review/text';
-// --- Fim Nomes das Colunas ---
 
-// Função para normalizar títulos (ignora case e espaços extras)
 function normalizeTitle(title) {
     if (typeof title !== 'string' || !title) {
-        return ''; // Retorna string vazia se não for string ou for vazia/null/undefined
+        return ''; 
     }
     return title.trim().toLowerCase();
 }
-// Função para importar Livros
 async function importBooks() {
     console.log('Iniciando importação de books_details.csv...');
     const filePath = path.resolve(__dirname, '../data/books_details.csv');
@@ -94,7 +83,7 @@ async function importBooks() {
             const bookTitle = book[BOOK_TITLE_COLUMN_IN_BOOKS_CSV];
 
             if (!bookTitle || processedTitles.has(bookTitle)) {
-                if(!bookTitle && booksRead > 1) console.warn(`Linha ${booksRead}: Livro sem título encontrado, pulando.`); // Evita log excessivo para cabeçalho vazio
+                if(!bookTitle && booksRead > 1) console.warn(`Linha ${booksRead}: Livro sem título encontrado, pulando.`); 
                 continue;
             }
 
@@ -106,7 +95,7 @@ async function importBooks() {
                 `;
                 await client.query(insertQuery, [
                     bookTitle,
-                    book[BOOK_DESCRIPTION_COLUMN_IN_BOOKS_CSV] || null, // Usa NULL se vazio
+                    book[BOOK_DESCRIPTION_COLUMN_IN_BOOKS_CSV] || null, 
                     book[BOOK_AUTHORS_COLUMN_IN_BOOKS_CSV] || null,
                     book[BOOK_IMAGE_COLUMN_IN_BOOKS_CSV] || null,
                     book[BOOK_PREVIEWLINK_COLUMN_IN_BOOKS_CSV] || null,
@@ -121,18 +110,16 @@ async function importBooks() {
 
             } catch (insertError) {
                 console.error(`Erro ao inserir/ignorar livro "${bookTitle}" (linha ~${booksRead}):`, insertError.message);
-                // throw insertError; // Descomente para parar o script em caso de erro aqui
             }
-        } // Fim do loop for await
+        } 
 
         console.log(`Leitura do CSV de livros concluída (${booksRead} linhas lidas). Populando mapa de títulos...`);
 
-        // Popula o mapa DEPOIS que todos os inserts/conflicts foram tratados
         const allBooks = await client.query('SELECT id, title FROM books WHERE title IS NOT NULL');
         allBooks.rows.forEach(row => {
-            const normalized = normalizeTitle(row.title); // Normaliza aqui
-            if (normalized) { // Só adiciona se o título normalizado não for vazio
-                 bookTitleToIdMap.set(normalized, row.id); // Usa o título normalizado como chave
+            const normalized = normalizeTitle(row.title); 
+            if (normalized) { 
+                 bookTitleToIdMap.set(normalized, row.id); 
             }
         });
         console.log(`Mapa de títulos normalizados populado com ${bookTitleToIdMap.size} entradas.`);
@@ -151,7 +138,6 @@ async function importBooks() {
     }
 }
 
-// Função para importar Reviews em Lotes
 async function importReviews(batchSize = 5000) {
     if (bookTitleToIdMap.size === 0) {
         console.warn("Mapa de títulos de livros está vazio. Importação de reviews abortada.");
@@ -166,7 +152,7 @@ async function importReviews(batchSize = 5000) {
     let reviewsLinked = 0;
     let reviewsUnlinked = 0;
     let totalProcessed = 0;
-    let loggedKeys = false; // Flag para logar as chaves apenas uma vez
+    let loggedKeys = false; 
     const client = await pool.connect();
     console.log('Conexão (reviews) estabelecida.');
 
@@ -174,28 +160,24 @@ async function importReviews(batchSize = 5000) {
         await client.query('BEGIN');
         console.log('Transação (reviews) iniciada.');
 
-        // Tenta remover a opção headers: true por enquanto, para ver se ajuda
         const stream = fs.createReadStream(filePath).pipe(csv({ escape: '"' }));
 
         for await (const review of stream) {
             totalProcessed++;
 
-            // --- NOVO DEBUG ---
-            // Loga as chaves do PRIMEIRO objeto 'review' recebido
+          
             if (!loggedKeys && review) {
                 console.log("--- DEBUG: Chaves encontradas no primeiro objeto 'review' ---");
                 console.log(Object.keys(review));
                 console.log("--- FIM DEBUG ---");
-                loggedKeys = true; // Marca que já logou
+                loggedKeys = true; 
             }
-            // --- FIM NOVO DEBUG ---
 
 
-            const originalBookTitle = review[REVIEW_TITLE_COLUMN_IN_REVIEWS_CSV]; // Continua usando a constante
+            const originalBookTitle = review[REVIEW_TITLE_COLUMN_IN_REVIEWS_CSV]; 
             const normalizedBookTitle = normalizeTitle(originalBookTitle);
             const bookId = bookTitleToIdMap.get(normalizedBookTitle);
 
-            // Log de debug original (mantido por enquanto)
             if (totalProcessed <= 5 || (totalProcessed % 500000 === 0 && totalProcessed > 0)) {
                  console.log(`DEBUG Review ${totalProcessed}: Original Title='${originalBookTitle}', Normalized='${normalizedBookTitle}', Found ID=${bookId}`);
             }
@@ -217,12 +199,9 @@ async function importReviews(batchSize = 5000) {
 
             if (batch.length >= batchSize) {
                 await processReviewBatch(client, batch);
-                // Removido log daqui para evitar poluição
                 batch = [];
             }
-        } // Fim do loop for await
-
-        // ... (resto da função igual: processa lote final, commit, return, catch, finally) ...
+        }
         if (batch.length > 0) {
             console.log(`Processando lote final com ${batch.length} reviews...`);
             await processReviewBatch(client, batch);
@@ -244,7 +223,6 @@ async function importReviews(batchSize = 5000) {
     }
 }
 
-// Função auxiliar para processar um lote de reviews
 async function processReviewBatch(client, batch) {
     if (!batch || batch.length === 0) return;
 
@@ -252,7 +230,7 @@ async function processReviewBatch(client, batch) {
         'book_id', 'original_review_id', 'user_id', 'profileName',
         'review_helpfulness', 'review_score', 'review_time',
         'review_summary', 'review_text',
-        'original_price_text' // Inclui a coluna para o texto do preço
+        'original_price_text'
     ];
     const numColumns = columns.length;
     const numRows = batch.length;
@@ -278,25 +256,22 @@ async function processReviewBatch(client, batch) {
         return;
     }
 
-    // Insere diretamente na tabela 'reviews' (assumindo que a coluna 'original_price_text' foi adicionada)
-    const insertQuery = `INSERT INTO reviews (${columns.join(', ')}) VALUES ${valuesPlaceholders.join(', ')} ON CONFLICT DO NOTHING`; // Adiciona ON CONFLICT por segurança se houver ID duplicado em reviews.csv
+    const insertQuery = `INSERT INTO reviews (${columns.join(', ')}) VALUES ${valuesPlaceholders.join(', ')} ON CONFLICT DO NOTHING`;
 
     try {
         await client.query(insertQuery, flatValues);
     } catch (batchError) {
          console.error(`Erro ao inserir lote de reviews:`, batchError.message);
-         throw batchError; // Propaga o erro para causar rollback da transação principal
+         throw batchError;
     }
 }
 
-// Função para atualizar agregados (Contagem, Média de Score e Preço)
 async function updateBookAggregates() {
     console.log("Iniciando atualização de agregados (contagem, média, preço) na tabela books...");
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // 1. Atualiza a Contagem e Média de Score
         console.log("Atualizando reviews_count e average_score...");
         const updateCountsAndAvgQuery = `
             WITH Aggregates AS (
@@ -326,7 +301,6 @@ async function updateBookAggregates() {
         const zeroAggResult = await client.query(zeroAggQuery);
         console.log(`${zeroAggResult.rowCount} livros tiveram contagem/média zerados.`);
 
-        // 2. Atualiza o Preço (pegando da primeira review com 'original_price_text' válido)
         console.log("Atualizando price (pegando da primeira review com 'original_price_text' válido)...");
         const updatePriceQuery = `
              WITH FirstValidPrice AS (
@@ -351,13 +325,11 @@ async function updateBookAggregates() {
          `;
 
          try {
-            // << DESCOMENTE ESTA LINHA SE VOCÊ ADICIONOU A COLUNA 'original_price_text' em 'reviews' >>
              const priceResult = await client.query(updatePriceQuery);
              console.log(`${priceResult.rowCount} livros tiveram 'price' atualizado.`);
          } catch (priceError) {
              console.error("ERRO ao executar a query de atualização de preços:", priceError.message);
              console.warn("Verifique se a coluna 'original_price_text' existe na tabela 'reviews' e se a query está correta para seus dados.");
-             // throw priceError; // Descomente para parar o script se o preço falhar
          }
 
         await client.query('COMMIT');
@@ -373,7 +345,6 @@ async function updateBookAggregates() {
     }
 }
 
-// Função Principal de Execução
 async function runImport() {
     const startTime = Date.now();
     console.log(`--- Iniciando processo de importação em ${new Date().toISOString()} ---`);
@@ -406,7 +377,7 @@ async function runImport() {
         }
 
         await importBooks();
-        const { reviewsLinked, reviewsUnlinked } = await importReviews(5000); // Ajuste batch size se necessário
+        const { reviewsLinked, reviewsUnlinked } = await importReviews(5000); 
         console.log(`Importação de reviews finalizada: ${reviewsLinked} vinculadas, ${reviewsUnlinked} não vinculadas.`);
 
         if (reviewsLinked > 0) {
@@ -420,7 +391,6 @@ async function runImport() {
 
     } catch (error) {
         console.error('--- Falha GERAL no processo de importação ---:', error.message);
-        // console.error(error.stack); // Descomente para ver o stack trace completo do erro JS
     } finally {
         await pool.end();
         const endTime = Date.now();
@@ -430,5 +400,4 @@ async function runImport() {
     }
 }
 
-// Executa o script
 runImport();

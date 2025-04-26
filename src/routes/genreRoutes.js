@@ -1,10 +1,8 @@
-// src/routes/genreRoutes.js
 const express = require('express');
 const db = require('../config/db');
 
 const router = express.Router();
 
-// Rota para listar todos os gêneros disponíveis
 router.get('/', async (req, res) => {
     try {
         const result = await db.query('SELECT id, name FROM genres ORDER BY name ASC');

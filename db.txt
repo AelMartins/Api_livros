@@ -1,0 +1,210 @@
+-- =============================================================================
+-- Script de Configuração do Banco de Dados para o Projeto Bookstore
+-- Banco de Dados: bookstore_db
+-- =============================================================================
+
+-- OBSERVAÇÃO: Os comandos DROP DATABASE/CREATE DATABASE geralmente precisam ser
+-- executados com privilégios de superusuário ou fora de uma transação.
+-- Se estiver usando psql, conecte-se primeiro ao servidor sem especificar um banco,
+-- execute os comandos abaixo (descomentados), e depois conecte-se ao bookstore_db
+-- com \connect bookstore_db antes de rodar o restante do script.
+-- Se estiver usando pgAdmin, crie o banco 'bookstore_db' manualmente primeiro.
+
+-- \echo 'Tentando dropar banco de dados existente bookstore_db (ignorar erro se não existir)...'
+-- DROP DATABASE IF EXISTS bookstore_db;
+
+-- \echo 'Criando banco de dados bookstore_db...'
+-- CREATE DATABASE bookstore_db;
+
+-- \echo 'Conectando ao banco de dados bookstore_db...'
+-- \connect bookstore_db;
+
+-- =============================================================================
+-- Limpeza: Dropar Tabelas Existentes (na ordem correta de dependência)
+-- =============================================================================
+\echo 'Droppando tabelas existentes (se houver)...'
+
+DROP TABLE IF EXISTS user_favorite_genres CASCADE;
+DROP TABLE IF EXISTS user_favorite_books CASCADE;
+DROP TABLE IF EXISTS reviews CASCADE;
+DROP TABLE IF EXISTS genres CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS books CASCADE;
+
+-- =============================================================================
+-- Criação da Tabela: users
+-- =============================================================================
+\echo 'Criando tabela users...'
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, -- NUNCA guarde senhas em texto plano!
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Adicionando constraints UNIQUE separadamente para nomeá-las
+ALTER TABLE users
+    ADD CONSTRAINT users_username_unique UNIQUE (username),
+    ADD CONSTRAINT users_email_unique UNIQUE (email);
+
+\echo 'Tabela users criada.'
+
+-- =============================================================================
+-- Criação da Tabela: genres
+-- =============================================================================
+\echo 'Criando tabela genres...'
+CREATE TABLE genres (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL -- Nome do gênero
+);
+
+-- Adicionando constraint UNIQUE e índice case-insensitive
+ALTER TABLE genres ADD CONSTRAINT genres_name_unique UNIQUE (name);
+CREATE INDEX IF NOT EXISTS idx_genres_name_lower ON genres (LOWER(name));
+
+\echo 'Tabela genres criada.'
+
+-- =============================================================================
+-- Criação da Tabela: books
+-- =============================================================================
+\echo 'Criando tabela books...'
+CREATE TABLE books (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    authors TEXT,
+    image TEXT,
+    previewLink TEXT,
+    publisher TEXT,
+    publishedDate TEXT, -- Mantido como TEXT, pode ser ajustado se o formato for consistente
+    infoLink TEXT,
+    categories TEXT, -- Armazena a string original, os gêneros são separados em 'genres'
+    -- Colunas para agregados (preenchidas pelo script Node.js)
+    price NUMERIC(10, 2), -- Preço obtido da primeira review válida
+    average_score REAL DEFAULT 0.0,
+    reviews_count INTEGER DEFAULT 0,
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP -- Para futuras atualizações
+    -- Removida a coluna 'ratingsCount' original do CSV, pois 'reviews_count' é mais precisa
+);
+
+-- Adicionando constraint UNIQUE no título e índices
+ALTER TABLE books ADD CONSTRAINT books_title_unique UNIQUE (title);
+CREATE INDEX IF NOT EXISTS idx_books_title_text_pattern ON books (title text_pattern_ops); -- Bom para buscas com LIKE 'prefixo%'
+CREATE INDEX IF NOT EXISTS idx_books_authors_text ON books USING GIN (to_tsvector('simple', authors)); -- Índice para busca full-text em autores (opcional)
+CREATE INDEX IF NOT EXISTS idx_books_categories_text ON books USING GIN (to_tsvector('simple', categories)); -- Índice para busca full-text em categorias (opcional)
+
+\echo 'Tabela books criada.'
+
+-- =============================================================================
+-- Criação da Tabela: reviews
+-- =============================================================================
+\echo 'Criando tabela reviews...'
+CREATE TABLE reviews (
+    id SERIAL PRIMARY KEY,
+    book_id INTEGER NOT NULL,
+    original_review_id TEXT, -- ID original do CSV de reviews
+    user_id TEXT, -- ID do usuário do CSV de reviews (não necessariamente nosso user.id)
+    profileName TEXT,
+    review_helpfulness TEXT,
+    review_score REAL,
+    review_time BIGINT, -- Assumindo timestamp Unix
+    review_summary TEXT,
+    review_text TEXT,
+    original_price_text TEXT, -- Coluna para guardar o texto do preço do CSV
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+    -- Chave estrangeira para books
+    CONSTRAINT fk_reviews_book
+        FOREIGN KEY (book_id)
+        REFERENCES books(id)
+        ON DELETE CASCADE -- Se o livro for deletado, as reviews também são
+);
+
+-- Índices para reviews
+CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_review_time ON reviews(review_time DESC); -- Para ordenar por mais recentes
+CREATE INDEX IF NOT EXISTS idx_reviews_review_score ON reviews(review_score DESC NULLS LAST); -- Para ordenar por nota
+
+\echo 'Tabela reviews criada.'
+
+-- =============================================================================
+-- Criação da Tabela: user_favorite_books (Junction Table)
+-- =============================================================================
+\echo 'Criando tabela user_favorite_books...'
+CREATE TABLE user_favorite_books (
+    user_id INTEGER NOT NULL,
+    book_id INTEGER NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+    -- Chave primária composta
+    PRIMARY KEY (user_id, book_id),
+
+    -- Chaves estrangeiras
+    CONSTRAINT fk_favbooks_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE, -- Se o usuário for deletado, seus favoritos também são
+    CONSTRAINT fk_favbooks_book
+        FOREIGN KEY (book_id)
+        REFERENCES books(id)
+        ON DELETE CASCADE -- Se o livro for deletado, as entradas aqui também são
+);
+
+\echo 'Tabela user_favorite_books criada.'
+
+-- =============================================================================
+-- Criação da Tabela: user_favorite_genres (Junction Table)
+-- =============================================================================
+\echo 'Criando tabela user_favorite_genres...'
+CREATE TABLE user_favorite_genres (
+    user_id INTEGER NOT NULL,
+    genre_id INTEGER NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+    -- Chave primária composta
+    PRIMARY KEY (user_id, genre_id),
+
+    -- Chaves estrangeiras
+    CONSTRAINT fk_favgenres_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_favgenres_genre
+        FOREIGN KEY (genre_id)
+        REFERENCES genres(id)
+        ON DELETE CASCADE -- Se o gênero for deletado, as entradas aqui também são
+);
+
+\echo 'Tabela user_favorite_genres criada.'
+
+-- =============================================================================
+-- População Inicial da Tabela: genres (OPCIONAL NESTE SCRIPT)
+-- =============================================================================
+-- ATENÇÃO: Esta seção assume que a tabela 'books' JÁ FOI POPULADA
+-- pelo script Node.js (importData.js). Idealmente, a população de gêneros
+-- deveria ser feita DEPOIS da importação dos livros.
+-- Mantenha esta seção comentada se for rodar este SQL antes da importação Node.js.
+-- Se for rodar depois, descomente para popular os gêneros.
+
+/*
+\echo 'Populando tabela genres a partir dos livros existentes (ignorar erros se já populado)...'
+INSERT INTO genres (name)
+SELECT DISTINCT TRIM(genre)
+FROM books,
+     unnest(
+        string_to_array(
+            TRIM(BOTH '[]' FROM regexp_replace(categories, E'\'', '', 'g')),
+            ','
+         )
+     ) AS genre
+WHERE categories IS NOT NULL AND categories != '' AND categories != '[]'
+ON CONFLICT (name) DO NOTHING;
+\echo 'Tabela genres populada (ou tentativa concluída).'
+*/
+
+-- =============================================================================
+\echo 'Script de configuração do banco de dados concluído.'
+-- =============================================================================
