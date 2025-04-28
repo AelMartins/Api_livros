@@ -208,3 +208,42 @@ ON CONFLICT (name) DO NOTHING;
 -- =============================================================================
 \echo 'Script de configuração do banco de dados concluído.'
 -- =============================================================================
+
+
+
+
+-- Tabela para armazenar os itens do carrinho de cada usuário
+CREATE TABLE IF NOT EXISTS cart_items (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, -- Adicionado para rastrear updates
+
+    -- Garante que um usuário não tenha o mesmo livro duas vezes no carrinho
+    -- A quantidade é atualizada nessa única linha
+    PRIMARY KEY (user_id, book_id),
+
+    -- Garante que a quantidade seja positiva
+    CONSTRAINT check_quantity_positive CHECK (quantity > 0)
+);
+
+-- Índice para busca rápida do carrinho de um usuário
+CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);
+
+-- Opcional: Trigger para atualizar automaticamente 'updated_at'
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS set_cart_timestamp ON cart_items; -- Remove trigger antigo se existir
+CREATE TRIGGER set_cart_timestamp
+BEFORE UPDATE ON cart_items
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+\echo 'Tabela cart_items e trigger criados/atualizados.'

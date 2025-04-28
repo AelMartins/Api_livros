@@ -6,6 +6,8 @@ const userRoutes = require('./routes/userRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const authRoutes = require('./routes/authRoutes');
 const genreRoutes = require('./routes/genreRoutes'); 
+const cartRoutes = require('./routes/cartRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes'); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +23,8 @@ app.use('/api/books', bookRoutes);
 app.use('/api/auth', authRoutes);   
 app.use('/api/genres', genreRoutes); 
 app.use('/api/users', userRoutes);
-
+app.use('/api/cart', cartRoutes); 
+app.use('/api/favorites', favoriteRoutes);
 
 app.get('/health', (req, res) => {
     res.status(200).send('OK');
