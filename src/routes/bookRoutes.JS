@@ -1,13 +1,12 @@
 // src/routes/bookRoutes.js
 const express = require('express');
-const jwt = require('jsonwebtoken'); // Necessário para o optionalAuthMiddleware
+const jwt = require('jsonwebtoken');
 const db = require('../config/db');
-require('dotenv').config(); // Garante que JWT_SECRET seja carregado
+require('dotenv').config();
 
 const router = express.Router();
 
-// --- Middleware Opcional de Autenticação ---
-// Tenta verificar o token, mas não bloqueia se ausente/inválido
+// --- Middleware Opcional de Autenticação (igual) ---
 const optionalAuthMiddleware = (req, res, next) => {
   const authHeader = req.header('Authorization');
   const token = authHeader && authHeader.split(' ')[1];
@@ -16,24 +15,15 @@ const optionalAuthMiddleware = (req, res, next) => {
       const jwtSecret = process.env.JWT_SECRET;
       if (jwtSecret) {
         const decoded = jwt.verify(token, jwtSecret);
-        req.user = decoded.user; // Define req.user se o token for válido
-        // console.log("DEBUG optionalAuth: Usuário encontrado no token:", req.user); // Descomente para debug
-      } else {
-           console.error("Erro no optionalAuth: JWT_SECRET não definido.");
+        req.user = decoded.user;
       }
-    } catch (err) {
-      // Ignora token inválido/expirado silenciosamente para rotas públicas
-      // console.log("DEBUG optionalAuth: Token inválido/expirado - ignorando."); // Descomente para debug
-    }
-  } else {
-       // console.log("DEBUG optionalAuth: Nenhum token encontrado."); // Descomente para debug
+    } catch (err) { /* Ignora erro */ }
   }
-  next(); // Sempre continua para a rota
+  next();
 };
 
 
-// --- ROTA GET /api/books (Lista de Livros) ---
-// Adicionado optionalAuthMiddleware e lógica is_favorite
+// --- ROTA GET /api/books (Lista de Livros) - SIMPLIFICADA E CORRIGIDA ---
 router.get('/', optionalAuthMiddleware, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
@@ -41,62 +31,67 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
     const searchTerm = req.query.search || '';
     const sortBy = req.query.sortBy || 'title';
     const sortOrder = (req.query.sortOrder || 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-    const userId = req.user?.id; // ID do usuário logado (ou undefined)
+    const userId = req.user?.id;
 
     // Validação de Ordenação
-    const allowedSortColumns = ['title', 'average_score', 'reviews_count', 'price', 'id', 'publishedDate']; // Note 'publishedDate' em minúsculas aqui se o nome da coluna for assim
+    const allowedSortColumns = ['title', 'average_score', 'reviews_count', 'price', 'id', 'publishedDate'];
     const safeSortBy = allowedSortColumns.includes(sortBy.toLowerCase()) ? sortBy : 'title';
 
     try {
         let queryParams = [];
-        let countParams = [];
+        let paramIndex = 1; // Contador de placeholders
 
-        // Campos básicos a selecionar
-        const selectFields = ` b.id, b.title, b.authors, b.image, b.categories, b.price, b.average_score, b.reviews_count, b.publishedDate `;
-
-        // Campo 'is_favorite' condicional
-        // O placeholder para userId será $1 se userId existir, senão não haverá $1 para isso
-        let favoriteField = ', FALSE AS is_favorite'; // Default para não logado
+        // --- Montagem da Query ---
+        // Campos básicos
+        let selectFields = ` SELECT b.id, b.title, b.authors, b.image, b.categories, b.price, b.average_score, b.reviews_count, b.publishedDate `;
+        // Campo is_favorite (usando subquery EXISTS)
+        let favoriteField = ', FALSE AS is_favorite'; // Default
         if (userId) {
-            queryParams.push(userId); // Adiciona userId como primeiro parâmetro
-            favoriteField = `, EXISTS (SELECT 1 FROM user_favorite_books ufb WHERE ufb.user_id = $1 AND ufb.book_id = b.id) AS is_favorite`;
+            favoriteField = `, EXISTS (SELECT 1 FROM user_favorite_books ufb WHERE ufb.user_id = $${paramIndex} AND ufb.book_id = b.id) AS is_favorite`;
+            queryParams.push(userId);
+            paramIndex++;
         }
-
-        // Monta a query principal
-        let baseQuery = `SELECT ${selectFields} ${favoriteField} FROM books b`;
-        let countQuery = `SELECT COUNT(b.id) FROM books b`;
+        // Cláusula FROM
+        let fromClause = ` FROM books b `;
+        // Cláusula WHERE (condicional)
         let whereClause = '';
-
-        // Adiciona busca (ajustando placeholders se userId foi adicionado)
         if (searchTerm) {
-            const searchPattern = `%${searchTerm}%`;
-            const searchParamIndex = queryParams.length + 1; // Próximo índice de parâmetro
-            whereClause = ` WHERE (b.title ILIKE $${searchParamIndex} OR b.authors ILIKE $${searchParamIndex} OR b.categories ILIKE $${searchParamIndex})`;
-            queryParams.push(searchPattern);
-            countParams.push(searchPattern); // countParams só tem search
+            whereClause = ` WHERE (b.title ILIKE $${paramIndex} OR b.authors ILIKE $${paramIndex} OR b.categories ILIKE $${paramIndex}) `;
+            queryParams.push(`%${searchTerm}%`);
+            paramIndex++;
+        }
+        // Cláusula ORDER BY
+        const orderByClause = ` ORDER BY ${safeSortBy === 'publishedDate' ? 'NULLIF(b.publishedDate, \'\')' : `b.${safeSortBy}`} ${sortOrder} NULLS LAST, b.id ASC `;
+        // Cláusula LIMIT e OFFSET
+        const limitOffsetClause = ` LIMIT $${paramIndex++} OFFSET $${paramIndex++} `;
+        queryParams.push(limit, offset);
+
+        // Query Principal Completa
+        const baseQuery = selectFields + favoriteField + fromClause + whereClause + orderByClause + limitOffsetClause;
+
+        // --- Query de Contagem (separada) ---
+        let countQuery = `SELECT COUNT(b.id) FROM books b`;
+        let countQueryParams = [];
+        if (searchTerm) {
+            countQuery += ` WHERE (b.title ILIKE $1 OR b.authors ILIKE $1 OR b.categories ILIKE $1)`;
+            countQueryParams.push(`%${searchTerm}%`);
         }
 
-        baseQuery += whereClause;
-        countQuery += whereClause;
-
-        // Adiciona ordenação, limite e offset
-        let paramIndex = queryParams.length + 1;
-        // Tratamento especial para ordenar por data que pode ser string/null
-        const orderByClause = ` ORDER BY ${safeSortBy === 'publishedDate' ? 'NULLIF(b.publishedDate, \'\')' : `b.${safeSortBy}`} ${sortOrder} NULLS LAST, b.id ASC`;
-        baseQuery += orderByClause;
-        baseQuery += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-        queryParams.push(limit, offset);
+        // console.log("DEBUG SQL Query:", baseQuery);
+        // console.log("DEBUG SQL Params:", queryParams);
+        // console.log("DEBUG Count Query:", countQuery);
+        // console.log("DEBUG Count Params:", countQueryParams);
 
         // Executa as queries
         const result = await db.query(baseQuery, queryParams);
-        const totalResult = await db.query(countQuery, countParams);
+        const totalResult = await db.query(countQuery, countQueryParams);
 
         const totalBooks = parseInt(totalResult.rows[0].count);
         const totalPages = Math.ceil(totalBooks / limit);
 
-        // Não precisamos formatar/parsear preço aqui, API retorna string, frontend trata
+        // Retorna os dados (preço como string, frontend formata)
         res.json({
-            data: result.rows, // Retorna com is_favorite
+            data: result.rows,
             pagination: {
                 currentPage: page, totalPages: totalPages, totalItems: totalBooks,
                 limit: limit, searchTerm: searchTerm, sortBy: safeSortBy, sortOrder: sortOrder
@@ -109,7 +104,7 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
 });
 
 // --- ROTA GET /api/books/:id (Detalhes do Livro) ---
-// Adicionado optionalAuthMiddleware e lógica is_favorite
+// Mantém a versão com EXISTS que já funcionava
 router.get('/:id', optionalAuthMiddleware, async (req, res) => {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -119,13 +114,12 @@ router.get('/:id', optionalAuthMiddleware, async (req, res) => {
     }
 
     try {
-        const selectFields = 'b.*'; // Pega todas as colunas de books
+        const selectFields = 'b.*';
          const favoriteField = userId
             ? `, EXISTS (SELECT 1 FROM user_favorite_books ufb WHERE ufb.user_id = $2 AND ufb.book_id = b.id) AS is_favorite`
             : ', FALSE AS is_favorite';
 
         const query = `SELECT ${selectFields} ${favoriteField} FROM books b WHERE b.id = $1`;
-        // Parâmetros dependem se userId existe
         const queryParams = userId ? [id, userId] : [id];
 
         const result = await db.query(query, queryParams);
@@ -133,8 +127,6 @@ router.get('/:id', optionalAuthMiddleware, async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Livro não encontrado' });
         }
-
-        // Retorna os dados do livro (incluindo is_favorite). Preço vem como string.
         res.json(result.rows[0]);
 
     } catch (err) {
@@ -143,9 +135,9 @@ router.get('/:id', optionalAuthMiddleware, async (req, res) => {
     }
 });
 
-// --- ROTA GET /api/books/:id/reviews (Lista de Reviews) ---
-// Nenhuma mudança necessária aqui
+// --- ROTA GET /api/books/:id/reviews (Lista de Reviews - sem mudanças) ---
 router.get('/:id/reviews', async (req, res) => {
+    // ... código como antes ...
     const { id } = req.params;
     if (isNaN(parseInt(id)) || parseInt(id) <= 0) {
       return res.status(400).json({ error: 'ID do livro inválido.' });
@@ -155,7 +147,6 @@ router.get('/:id/reviews', async (req, res) => {
     const offset = (page - 1) * limit;
     const sortBy = req.query.sortBy || 'review_time';
     const sortOrder = (req.query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-
     const allowedSortColumnsReviews = ['review_time', 'review_score', 'created_at'];
     const safeSortByReviews = allowedSortColumnsReviews.includes(sortBy.toLowerCase()) ? sortBy : 'review_time';
 
@@ -185,5 +176,6 @@ router.get('/:id/reviews', async (req, res) => {
         res.status(500).json({ error: 'Erro interno do servidor ao buscar reviews' });
     }
 });
+
 
 module.exports = router;
