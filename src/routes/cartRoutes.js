@@ -1,13 +1,11 @@
-// src/routes/cartRoutes.js
 const express = require('express');
 const db = require('../config/db');
-const authMiddleware = require('../middleware/authMiddleware'); // Middleware para proteger rotas
+const authMiddleware = require('../middleware/authMiddleware'); 
 const { body, param, validationResult } = require('express-validator');
 
 const router = express.Router();
 
-// --- Helper Function para buscar e formatar o carrinho ---
-//    Evita repetição de código nas rotas PUT e DELETE
+
 const fetchAndFormatCart = async (userId) => {
     const cartQuery = `
         SELECT
@@ -33,11 +31,10 @@ const fetchAndFormatCart = async (userId) => {
 };
 
 
-// --- BUSCAR CARRINHO DO USUÁRIO LOGADO ---
 router.get('/', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     try {
-        const formattedCart = await fetchAndFormatCart(userId); // Usa a helper function
+        const formattedCart = await fetchAndFormatCart(userId); 
         res.json(formattedCart);
     } catch (err) {
         console.error(`Erro ao buscar carrinho para user ${userId}:`, err.message);
@@ -46,11 +43,10 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 
-// --- ADICIONAR/ATUALIZAR ITEM NO CARRINHO ---
 router.post(
     '/',
     authMiddleware,
-    [ // Validações
+    [
         body('bookId', 'ID do livro inválido').isInt({ gt: 0 }),
         body('quantity', 'Quantidade inválida').optional().isInt({ gt: 0 })
     ],
@@ -62,7 +58,7 @@ router.post(
 
         const userId = req.user.id;
         const { bookId } = req.body;
-        const quantityToAdd = req.body.quantity || 1; // Default 1
+        const quantityToAdd = req.body.quantity || 1; 
 
         try {
              const bookCheck = await db.query('SELECT id FROM books WHERE id = $1', [bookId]);
@@ -80,8 +76,7 @@ router.post(
             `;
             await db.query(upsertQuery, [userId, bookId, quantityToAdd]);
 
-            // Busca e retorna o carrinho atualizado
-            const formattedCart = await fetchAndFormatCart(userId); // Usa a helper function
+            const formattedCart = await fetchAndFormatCart(userId); 
             res.status(200).json(formattedCart);
 
         } catch (err) {
@@ -91,7 +86,6 @@ router.post(
     }
 );
 
-// --- ATUALIZAR QUANTIDADE DE UM ITEM ESPECÍFICO ---
 router.put(
     '/:bookId',
     authMiddleware,
@@ -122,8 +116,7 @@ router.put(
                  return res.status(404).json({ errors: [{ msg: 'Item não encontrado no carrinho.' }] });
              }
 
-             // Busca e retorna o carrinho atualizado (QUERY CORRIGIDA)
-             const formattedCart = await fetchAndFormatCart(userId); // Usa a helper function
+             const formattedCart = await fetchAndFormatCart(userId); 
              res.status(200).json(formattedCart);
 
          } catch (err) {
@@ -134,7 +127,6 @@ router.put(
 );
 
 
-// --- REMOVER UM ITEM DO CARRINHO ---
 router.delete(
     '/:bookId',
     authMiddleware,
@@ -156,8 +148,7 @@ router.delete(
                 console.log(`Item ${bookId} não encontrado no carrinho do user ${userId} para remoção (sem erro).`);
              }
 
-             // Busca e retorna o carrinho atualizado (QUERY CORRIGIDA)
-             const formattedCart = await fetchAndFormatCart(userId); // Usa a helper function
+             const formattedCart = await fetchAndFormatCart(userId); 
              res.status(200).json(formattedCart);
 
          } catch (err) {
@@ -167,12 +158,11 @@ router.delete(
      }
 );
 
-// --- LIMPAR CARRINHO INTEIRO ---
 router.delete('/', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     try {
         await db.query('DELETE FROM cart_items WHERE user_id = $1', [userId]);
-        res.status(200).json([]); // Retorna carrinho vazio
+        res.status(200).json([]); 
     } catch (err) {
         console.error(`Erro ao limpar carrinho para user ${userId}:`, err.message);
         res.status(500).json({ errors: [{ msg: 'Erro interno ao limpar carrinho.' }] });

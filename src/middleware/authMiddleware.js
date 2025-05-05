@@ -1,18 +1,14 @@
-// src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
-require('dotenv').config(); // Para carregar JWT_SECRET
+require('dotenv').config(); 
 
 const authMiddleware = (req, res, next) => {
-    // Pega o token do header Authorization: Bearer TOKEN
     const authHeader = req.header('Authorization');
-    const token = authHeader && authHeader.split(' ')[1]; // Pega só a parte do token
+    const token = authHeader && authHeader.split(' ')[1]; 
 
-    // Verifica se não há token
     if (!token) {
         return res.status(401).json({ errors: [{ msg: 'Nenhum token, autorização negada.' }] });
     }
 
-    // Verifica o token
     try {
         const jwtSecret = process.env.JWT_SECRET;
         if (!jwtSecret) {
@@ -22,10 +18,8 @@ const authMiddleware = (req, res, next) => {
 
         const decoded = jwt.verify(token, jwtSecret);
 
-        // Adiciona o payload do usuário (que contém o id) ao objeto req
-        // Assim as rotas protegidas podem acessar req.user.id
         req.user = decoded.user;
-        next(); // Passa para a próxima função (a rota)
+        next(); 
 
     } catch (err) {
         console.error("Erro na verificação do token:", err.message);

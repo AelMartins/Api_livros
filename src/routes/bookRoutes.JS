@@ -1,4 +1,3 @@
-// src/routes/bookRoutes.js
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
@@ -6,7 +5,6 @@ require('dotenv').config();
 
 const router = express.Router();
 
-// --- Middleware Opcional de Autenticação (igual) ---
 const optionalAuthMiddleware = (req, res, next) => {
   const authHeader = req.header('Authorization');
   const token = authHeader && authHeader.split(' ')[1];
@@ -23,7 +21,6 @@ const optionalAuthMiddleware = (req, res, next) => {
 };
 
 
-// --- ROTA GET /api/books (Lista de Livros) - SIMPLIFICADA E CORRIGIDA ---
 router.get('/', optionalAuthMiddleware, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
@@ -33,43 +30,32 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
     const sortOrder = (req.query.sortOrder || 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
     const userId = req.user?.id;
 
-    // Validação de Ordenação
     const allowedSortColumns = ['title', 'average_score', 'reviews_count', 'price', 'id', 'publishedDate'];
     const safeSortBy = allowedSortColumns.includes(sortBy.toLowerCase()) ? sortBy : 'title';
 
     try {
         let queryParams = [];
-        let paramIndex = 1; // Contador de placeholders
-
-        // --- Montagem da Query ---
-        // Campos básicos
+        let paramIndex = 1; 
         let selectFields = ` SELECT b.id, b.title, b.authors, b.image, b.categories, b.price, b.average_score, b.reviews_count, b.publishedDate `;
-        // Campo is_favorite (usando subquery EXISTS)
-        let favoriteField = ', FALSE AS is_favorite'; // Default
+        let favoriteField = ', FALSE AS is_favorite'; 
         if (userId) {
             favoriteField = `, EXISTS (SELECT 1 FROM user_favorite_books ufb WHERE ufb.user_id = $${paramIndex} AND ufb.book_id = b.id) AS is_favorite`;
             queryParams.push(userId);
             paramIndex++;
         }
-        // Cláusula FROM
         let fromClause = ` FROM books b `;
-        // Cláusula WHERE (condicional)
         let whereClause = '';
         if (searchTerm) {
             whereClause = ` WHERE (b.title ILIKE $${paramIndex} OR b.authors ILIKE $${paramIndex} OR b.categories ILIKE $${paramIndex}) `;
             queryParams.push(`%${searchTerm}%`);
             paramIndex++;
         }
-        // Cláusula ORDER BY
         const orderByClause = ` ORDER BY ${safeSortBy === 'publishedDate' ? 'NULLIF(b.publishedDate, \'\')' : `b.${safeSortBy}`} ${sortOrder} NULLS LAST, b.id ASC `;
-        // Cláusula LIMIT e OFFSET
         const limitOffsetClause = ` LIMIT $${paramIndex++} OFFSET $${paramIndex++} `;
         queryParams.push(limit, offset);
 
-        // Query Principal Completa
         const baseQuery = selectFields + favoriteField + fromClause + whereClause + orderByClause + limitOffsetClause;
 
-        // --- Query de Contagem (separada) ---
         let countQuery = `SELECT COUNT(b.id) FROM books b`;
         let countQueryParams = [];
         if (searchTerm) {
@@ -77,19 +63,13 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
             countQueryParams.push(`%${searchTerm}%`);
         }
 
-        // console.log("DEBUG SQL Query:", baseQuery);
-        // console.log("DEBUG SQL Params:", queryParams);
-        // console.log("DEBUG Count Query:", countQuery);
-        // console.log("DEBUG Count Params:", countQueryParams);
 
-        // Executa as queries
         const result = await db.query(baseQuery, queryParams);
         const totalResult = await db.query(countQuery, countQueryParams);
 
         const totalBooks = parseInt(totalResult.rows[0].count);
         const totalPages = Math.ceil(totalBooks / limit);
 
-        // Retorna os dados (preço como string, frontend formata)
         res.json({
             data: result.rows,
             pagination: {
@@ -103,8 +83,7 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
     }
 });
 
-// --- ROTA GET /api/books/:id (Detalhes do Livro) ---
-// Mantém a versão com EXISTS que já funcionava
+
 router.get('/:id', optionalAuthMiddleware, async (req, res) => {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -135,9 +114,7 @@ router.get('/:id', optionalAuthMiddleware, async (req, res) => {
     }
 });
 
-// --- ROTA GET /api/books/:id/reviews (Lista de Reviews - sem mudanças) ---
 router.get('/:id/reviews', async (req, res) => {
-    // ... código como antes ...
     const { id } = req.params;
     if (isNaN(parseInt(id)) || parseInt(id) <= 0) {
       return res.status(400).json({ error: 'ID do livro inválido.' });

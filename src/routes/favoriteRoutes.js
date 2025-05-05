@@ -1,12 +1,10 @@
-// src/routes/favoriteRoutes.js
 const express = require('express');
 const db = require('../config/db');
-const authMiddleware = require('../middleware/authMiddleware'); // Protege as rotas
+const authMiddleware = require('../middleware/authMiddleware'); 
 const { param, validationResult } = require('express-validator');
 
 const router = express.Router();
 
-// --- BUSCAR TODOS OS LIVROS FAVORITOS DO USUÁRIO LOGADO ---
 router.get('/', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -22,13 +20,12 @@ router.get('/', authMiddleware, async (req, res) => {
         `;
         const favBooksResult = await db.query(favBooksQuery, [userId]);
 
-        // Formata o preço (vem como string do DB)
         const formattedResults = favBooksResult.rows.map(book => ({
             ...book,
-            price: parseFloat(book.price) || null // Converte para número ou null
+            price: parseFloat(book.price) || null
         }));
 
-        res.json(formattedResults); // Retorna array de objetos de livros favoritos
+        res.json(formattedResults); 
 
     } catch (err) {
         console.error(`Erro ao buscar favoritos para user ${userId}:`, err.message);
@@ -37,7 +34,6 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 
-// --- ADICIONAR UM LIVRO AOS FAVORITOS ---
 router.post(
     '/:bookId',
     authMiddleware,
@@ -52,13 +48,11 @@ router.post(
         const bookId = parseInt(req.params.bookId, 10);
 
         try {
-             // Verifica se o livro existe (opcional, mas bom)
              const bookCheck = await db.query('SELECT id FROM books WHERE id = $1', [bookId]);
              if (bookCheck.rows.length === 0) {
                 return res.status(404).json({ errors: [{ msg: 'Livro não encontrado para favoritar.' }] });
              }
 
-            // Insere na tabela, ignorando conflito se já for favorito
             const insertQuery = `
                 INSERT INTO user_favorite_books (user_id, book_id)
                 VALUES ($1, $2)
@@ -66,7 +60,7 @@ router.post(
             `;
             await db.query(insertQuery, [userId, bookId]);
 
-            res.status(201).json({ msg: 'Livro adicionado aos favoritos.' }); // 201 Created (ou 200 OK)
+            res.status(201).json({ msg: 'Livro adicionado aos favoritos.' }); 
 
         } catch (err) {
             console.error(`Erro ao adicionar favorito ${bookId} para user ${userId}:`, err.message);
@@ -75,7 +69,6 @@ router.post(
     }
 );
 
-// --- REMOVER UM LIVRO DOS FAVORITOS ---
 router.delete(
     '/:bookId',
     authMiddleware,
@@ -96,7 +89,6 @@ router.delete(
             if (result.rowCount > 0) {
                 res.status(200).json({ msg: 'Livro removido dos favoritos.' });
             } else {
-                // Se não removeu nada, pode ser que não era favorito
                 res.status(404).json({ msg: 'Livro não encontrado nos favoritos para remover.' });
             }
 
