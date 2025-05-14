@@ -12,7 +12,7 @@ body:
         * Para perguntas, acesse [Fale conosco](https://site.fatecfranca.edu.br/a-fatec-franca/fale-conosco).
         * Antes de abrir uma issue, consulte a documentação.
         * Verifique se o problema já foi reportado [aqui](https://github.com/JoaoVictorGarcia2/Api_livros/issues).
-        * Caso o bug aparente apresentar potenciais perigos ao ser exposto ao público, não o publique, siga as instruções dispostas em nossas [políticas de segurança](https://github.com/JoaoVictorGarcia2/Api_livros/security/policy).
+        * Caso o bug aparente apresentar potenciais perigos ao ser exposto ao público, não o publique, siga as instruções dispostas em nossas [políticas de segurança](https://github.com/JoaoVictorGarcia2/Livronline?tab=security-ov-file).
 
   - type: checkboxes
     id: terms
@@ -20,7 +20,7 @@ body:
       label: Código de Conduta
       description: Este projeto tem um Código de Conduta que todos os participantes devem entender e seguir.
       options:
-        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Api_livros?tab=coc-ov-file#readme) do projeto.
+        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Livronline?tab=coc-ov-file) do projeto.
           required: true
 
   - type: checkboxes
@@ -29,7 +29,7 @@ body:
       label: Políticas de Segurança
       description: Este projeto tem uma Política de Segurança que todos os participantes devem entender e seguir.
       options:
-        - label: Eu li, concordo e confirmo que a publicação desta issue não apresenta potenciais perigos ao ser exposta ao público conforme as diretrizes da [Política de Segurança](https://github.com/JoaoVictorGarcia2/Api_livros/security/policy) do projeto.
+        - label: Eu li, concordo e confirmo que a publicação desta issue não apresenta potenciais perigos ao ser exposta ao público conforme as diretrizes da [Política de Segurança](https://github.com/JoaoVictorGarcia2/Livronline?tab=security-ov-file) do projeto.
           required: true
 
   - type: textarea
