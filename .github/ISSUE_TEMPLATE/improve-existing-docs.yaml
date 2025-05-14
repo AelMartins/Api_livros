@@ -1,0 +1,53 @@
+name: Contribuição de Documentação
+description: Faça uma sugestão para melhorar o conteúdo de um artigo existente.
+title: "Update Content <insira o título do conteúdo>"
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Este é um repositório de código aberto promovido pela Fatec Franca Dr. Thomaz Novelino. Você pode abrir uma issue no repositório interno, contribuindo para melhorar nossa comunidade Fatec.
+
+        * Para perguntas, acesse [Fale conosco](https://site.fatecfranca.edu.br/a-fatec-franca/fale-conosco) na página oficial da faculdade.
+        * Antes de abrir uma issue, leia atentamente as documentações de como o fazer ou entre em contato com a universidade.
+        * Verifique se alguém já não abriu uma issue semelhante [aqui](https://github.com/JoaoVictorGarcia2/Api_livros/issues).
+
+        Caso encontre dificuldades em criar ou enviar a issue, você tem total liberdade para entrar em contato por e-mail com os responsáveis pelo projeto para tirar suas dúvidas ou para enviar suas contribuições no formato mais conveniente, desde que ele englobe o conteúdo expedido neste documento.
+
+        Sendo esse o caso, afirmamos com certeza que os devidos créditos serão aplicados aos contribuidores que optaram por esse outro meio.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Código de Conduta
+      description: Este projeto tem um Código de Conduta que todos os participantes devem entender e seguir.
+      options:
+        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Livronline?tab=coc-ov-file) do projeto.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Qual artigo em nosso projeto está afetado?
+      description: Por favor, forneça o link para o artigo que você gostaria de ver atualizado.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Quais partes do artigo você gostaria de ver atualizadas?
+      description: |
+        - Dê o máximo de detalhes possível para nos ajudar a entender a mudança que você gostaria de ver.
+        - Por que a documentação deve ser alterada? Quais casos de uso ela apoia?
+        - Qual é o resultado ou comportamento esperado?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Informações adicionais
+      description: |
+        - Você consegue reproduzir o problema de forma confiável? Com que frequência isso ocorre? Quantos usuários são afetados?
+        - Adicione qualquer outro contexto ou capturas de tela sobre a funcionalidade aqui.
+    validations:
+      required: false
