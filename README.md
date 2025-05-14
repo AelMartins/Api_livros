@@ -8,3 +8,7 @@ Carrinho de compras persistente no banco (para logados) e no localStorage (para 
 Tecnologias:
 Backend: Node.js, Express.js, PostgreSQL.
 Frontend (Web): React, TypeScript, Vite, React Router, Context API, Axios.
+
+*** 
+
+Link dos Datasets: https://www.kaggle.com/datasets/mohamedbakhet/amazon-books-reviews
