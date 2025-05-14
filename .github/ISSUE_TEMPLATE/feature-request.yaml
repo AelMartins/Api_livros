@@ -1,0 +1,52 @@
+name: Solicitação de Funcionalidade
+description: Sugira uma ideia para este projeto.
+title: "Feature Request <insira um título para a funcionalidade>"
+labels: 
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Este é um repositório de código aberto promovido pela Fatec Franca Dr. Thomaz Novelino. Sua contribuição é importante para melhorar nossa comunidade Fatec.
+
+        * Para perguntas, acesse [Fale conosco](https://site.fatecfranca.edu.br/a-fatec-franca/fale-conosco).
+        * Antes de abrir uma issue, consulte a documentação.
+        * Verifique se a funcionalidade já foi solicitada [aqui](https://github.com/JoaoVictorGarcia2/Api_livros/issues).
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Código de Conduta
+      description: Este projeto tem um Código de Conduta que todos os participantes devem entender e seguir.
+      options:
+        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Livronline?tab=coc-ov-file) do projeto.
+          required: true
+          
+  - type: textarea
+    attributes:
+      label: O seu pedido de funcionalidade está relacionado a um problema?
+      description: Adicione uma descrição clara e concisa do que é o problema.
+      placeholder: Ex. Estou sempre frustrado quando [...]
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Descreva alternativas que você considerou
+      description: Uma descrição clara e concisa de quaisquer soluções ou funcionalidades alternativas que você considerou.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Descreva a solução que você gostaria de ver
+      description: Uma descrição clara e concisa do que você deseja que aconteça ou acharia interessante acontecer na aplicação.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Contexto Adicional
+      description: Adicione qualquer outro contexto que achar importante como capturas de tela ou rascunhos criativos sobre a solicitação de funcionalidade.
+    validations:
+      required: false
