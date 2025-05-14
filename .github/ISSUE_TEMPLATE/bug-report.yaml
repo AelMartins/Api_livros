@@ -1,0 +1,89 @@
+name: Relatório de Bug
+description: Crie um relatório de algo que não funciona corretamente
+title: "Bug Report <insira um título para o bug>"
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Este é um repositório de código aberto promovido pela Fatec Franca Dr. Thomaz Novelino. Sua contribuição é importante para melhorar nossa comunidade Fatec.
+
+        * Para perguntas, acesse [Fale conosco](https://site.fatecfranca.edu.br/a-fatec-franca/fale-conosco).
+        * Antes de abrir uma issue, consulte a documentação.
+        * Verifique se o problema já foi reportado [aqui](https://github.com/JoaoVictorGarcia2/Api_livros/issues).
+        * Caso o bug aparente apresentar potenciais perigos ao ser exposto ao público, não o publique, siga as instruções dispostas em nossas [políticas de segurança](https://github.com/JoaoVictorGarcia2/Api_livros/security/policy).
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Código de Conduta
+      description: Este projeto tem um Código de Conduta que todos os participantes devem entender e seguir.
+      options:
+        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Api_livros?tab=coc-ov-file#readme) do projeto.
+          required: true
+
+  - type: checkboxes
+    id: security_policy
+    attributes:
+      label: Políticas de Segurança
+      description: Este projeto tem uma Política de Segurança que todos os participantes devem entender e seguir.
+      options:
+        - label: Eu li, concordo e confirmo que a publicação desta issue não apresenta potenciais perigos ao ser exposta ao público conforme as diretrizes da [Política de Segurança](https://github.com/JoaoVictorGarcia2/Api_livros/security/policy) do projeto.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Descreva o Bug
+      description: Adicione uma descrição clara e concisa do que é o bug.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Como Reproduzir
+      description: Descreva os passos para reproduzir o comportamento.
+      placeholder: |
+        - Vá para '...'
+        - Clique em '...'
+        - Role para baixo até '...'
+        - Veja o erro
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Comportamento Esperado
+      description: Adicione uma descrição clara do que você esperava que acontecesse.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: Se aplicável, adicione capturas de tela para ajudar a explicar seu problema.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Dispositivo Utilizado
+      description: Informe o aparelho, sistema operacional e versão onde ocorreu o bug.
+      placeholder: |
+        - **Desktop:**
+          - SO: [ex. Windows, macOS]
+          - Versão: [ex. 22]
+
+        - **Smartphone:**
+          - Dispositivo: [ex. iPhone6]
+          - SO: [ex. iOS8.1]
+          - Versão: [ex. 22]
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Contexto Adicional
+      description: Adicione qualquer outro contexto sobre o problema que você achar necessário.
+    validations:
+      required: false
