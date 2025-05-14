@@ -19,7 +19,7 @@ body:
       label: Código de Conduta
       description: Este projeto tem um Código de Conduta que todos os participantes devem entender e seguir.
       options:
-        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Livronline?tab=coc-ov-file) do projeto.
+        - label: Eu li e concordo com o [Código de Conduta](https://github.com/JoaoVictorGarcia2/Livronline?tab=coc-ov-file/#readme) do projeto.
           required: true
           
   - type: textarea
