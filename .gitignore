@@ -60,6 +60,8 @@ Desktop.ini
 venv/
 data/
 datasets/
+books_data.csv
+Books_rating.csv
 __pycache__/
 *.pyo
 *.pyd
