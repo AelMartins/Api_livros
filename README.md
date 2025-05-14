@@ -90,7 +90,7 @@ Caso se interesse em contribuir de alguma maneira na melhoria deste repositório
 
 <br>
 
-Instale as dependências através do arquivo [requirements.txt](./requirements.txt)
+Instale as dependências através do arquivo [requirements.txt](./machine-learning/requirements.txt)
 
 ```bash
 pip install -r requirements.txt
