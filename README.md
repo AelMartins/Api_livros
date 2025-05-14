@@ -1,14 +1,29 @@
-ONlivro é uma aplicação full-stack de uma loja de livros online web e mobile que permite aos usuários explorar um catálogo, buscar títulos, ver detalhes, ler avaliações, favoritar livros e gerenciar um carrinho de compras.
-Principais Funcionalidades:
-Navegação e busca de livros (título, autor, gênero) com sugestões.
-Página de detalhes completa para cada livro (descrição, preço, avaliações, imagem ampliável).
-Sistema de cadastro e login de usuários.
-Funcionalidade de favoritar livros, com persistência no banco de dados para usuários logados.
-Carrinho de compras persistente no banco (para logados) e no localStorage (para deslogados), com mesclagem ao logar.
-Tecnologias:
-Backend: Node.js, Express.js, PostgreSQL.
-Frontend (Web): React, TypeScript, Vite, React Router, Context API, Axios.
+> [!WARNING]
+> Projeto em andamento
+>
+> Este repositório trata apenas do Back-End da aplicação. <br>
+> O Front-End se encontra em **[github.com/JoaoVictorGarcia2/Livronline](https://github.com/JoaoVictorGarcia2/Livronline)**. <br>
+> – _Antes de efetuar uma contribuição, lembre-se sempre de verificar a URL do repositório para aplicar suas propostas de modificações nos devidos lugares._
+>
+> Você pode acompanhar o processo de desenvolvimento pela pasta [management](https://github.com/JoaoVictorGarcia2/Livronline/tree/main/management).
 
-*** 
+Este é um projeto acadêmico interdisciplinar criado com propósitos avaliativos para a conclusão do sexto semestre da 5º turma do curso superior de Desenvolvimento de Software Multiplataforma oferecido pela Fatec Franca Dr. Thomaz Novelino do Centro Paula Souza (CPS).
 
-Link dos Datasets: https://www.kaggle.com/datasets/mohamedbakhet/amazon-books-reviews
+Para mais informações sobre a Proposta Acadêmica, Descrição da Aplicação, Código de Conduta, Políticas de Segurança e Licença de desenvolvimento, acesse **[github.com/JoaoVictorGarcia2/Livronline/README.md](https://github.com/JoaoVictorGarcia2/Livronline?tab=readme-ov-file)**.
+
+Caso se interesse em contribuir de alguma maneira na melhoria deste repositório, acesse nosso **[Guia de Contribuição](./.github/CONTRIBUTING.md)**.
+
+
+## Sumário
+
+1. [Instalação](#instalação)
+2. [Inicialização](#inicialização)
+
+<br>
+
+## Instalação
+
+
+
+## Inicialização
+
