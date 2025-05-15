@@ -17,8 +17,8 @@ Caso se interesse em contribuir de alguma maneira na melhoria deste repositório
 ## Sumário
 
 1. [Instalação](#instalação)
-2. [Inicialização](#inicialização)
-    2.1 [Aprendizagem de Máquina](#aprendizagem-de-máquina)
+2. [Inicialização](#inicialização) <br>
+    2.1. [Aprendizagem de Máquina](#aprendizagem-de-máquina)
 
 <br>
 
@@ -57,10 +57,10 @@ Caso se interesse em contribuir de alguma maneira na melhoria deste repositório
 > deactivate
 > ```
 >
-> > [!NOTE]
+> > [!NOTE] <br>
 > > É possivel que você encontre algum problema ao ativar o ambiente devido a alguma configuração de segurança de seu sistema operacional. Leia atentamente as instruções que serão exibidas no terminal e **em último caso**, considere desativar temporariamente as políticas de segurança de execução de scripts para poder executar o comando.
 >
-> > [!NOTE]
+> > [!NOTE] <br>
 > > É possível qua a aplicação não reconheça os imports do Python devido a configurações do interpretador da linguagem do seu editor de código.
 > >
 > > Para solucionar esse problema, acesse as configurações (Settings) e as abra em formato JSON (Open Settings (JSON)) se houver a possibilidade.
@@ -97,7 +97,7 @@ pip install -r requirements.txt
 ```
 
 > [!WARNING]
-> Sempre o atualize o arquivo requirements.txt caso adicione novas dependências com o comando:
+> Sempre o atualize o arquivo requirements.txt caso adicione novas dependências através do comando:
 >
 > ```bash
 > pip freeze > requirements.txt
