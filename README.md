@@ -102,3 +102,11 @@ pip install -r requirements.txt
 > ```bash
 > pip freeze > requirements.txt
 > ```
+
+Execute o servidor
+
+```bash
+python server.py
+```
+
+**Ele estará hospedado em http://localhost:5000**
