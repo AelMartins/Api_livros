@@ -109,4 +109,44 @@ Execute o servidor
 python server.py
 ```
 
-**Ele estará hospedado em http://localhost:5000**
+**Ele estará aberto em http://localhost:5000**
+
+Para para se comunicar com o modelo de aprendizagem, você precisará enviar um JSON (método POST) para **http://localhost:5000/predict** no seguinte formato:
+
+```json
+{
+    "title": "O Hobbit",
+    "authors": ["J.R.R. Tolkien"],
+    "categories": ["Fantasy", "Adventure"],
+    "publisher": "HarperCollins",
+    "published_year": "1937",
+    "average_rating": 4.7,
+    "average_review_rating": 4.8
+}
+```
+
+Sua resposta será:
+
+```json
+{
+  "recommendations": [
+    { "index": 1053, "score": 0.9423 },
+    { "index": 237,  "score": 0.9127 },
+    ...
+  ]
+}
+```
+
+Este "index" deve ser utilizado para buscar os livros reais em seu banco de dados relacional com algo como:
+
+```sql
+SELECT * FROM books WHERE embedding_index IN (1053, 237, ...)
+```
+
+> [!NOTE] 
+> Certifique-se de ter um campo como embedding_index no banco que corresponda à ordem dos embeddings carregados pelo book_embeddings.npy.
+> 
+> O index retornado pelo modelo de recomendação é a posição dos dados no array book_embeddings.npy.
+> Ou seja, não é automaticamente o id do banco de dados, a menos que você tenha garantido isso na hora de gerar e salvar os dados.
+> 
+> Como utilizamos um DataFrame para gerar os embeddings, então o índice do DataFrame (df.index) corresponde diretamente à posição do embedding.
