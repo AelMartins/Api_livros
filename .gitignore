@@ -1,7 +1,7 @@
 # Node.js dependencies
 node_modules/
 
-# Environment variables file (IMPORTANTE: Não subir segredos!)
+# Environment variables file
 .env
 .env.*
 !.env.example
@@ -19,10 +19,6 @@ pids/
 *.pid
 *.seed
 *.pid.lock
-
-# Arquivos de dados grandes (CSVs) - NÃO SUBIR!
-# Ignora todo o conteúdo da pasta 'data'
-data/
 
 # Coverage directory used by tools like istanbul
 coverage/
@@ -59,3 +55,13 @@ Desktop.ini
 *.tgz
 *.zip
 *.rar
+
+# Python / Machine Learning related
+venv/
+data/
+datasets/
+books_data.csv
+Books_rating.csv
+__pycache__/
+*.pyo
+*.pyd
