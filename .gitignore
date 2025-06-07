@@ -65,3 +65,6 @@ Books_rating.csv
 __pycache__/
 *.pyo
 *.pyd
+*.pyc
+*venv*
+venv_ml/
