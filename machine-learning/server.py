@@ -12,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # ===== 1. Carregar os componentes =====
 BASE = "model_components"
-MODEL_PATH       = os.path.join(BASE, "modelo_embeddings.h5")
+MODEL_PATH       = os.path.join(BASE, "modelo_embeddings.keras")
 EMB_PATH         = os.path.join(BASE, "book_embeddings.npy")
 TOK_AUTH_PATH    = os.path.join(BASE, "tokenizer_auth.pkl")
 TOK_CAT_PATH     = os.path.join(BASE, "tokenizer_cat.pkl")
