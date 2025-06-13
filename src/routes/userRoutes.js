@@ -79,19 +79,15 @@ router.get('/:id/favorites', async (req, res) => {
   }
 });
 
-// --- ROTA DE REGISTRO ATUALIZADA COM SALVAMENTO DE FAVORITOS ---
 router.post('/register', async (req, res) => {
-  // AGORA PEGA OS FAVORITOS DO CORPO DA REQUISIÇÃO
   const { username, email, password, favoriteBookIds, favoriteGenreIds } = req.body;
 
-  // Validações básicas
   if (!username || !email || !password) {
     return res.status(400).json({ errors: [{ msg: 'Nome de usuário, email e senha são obrigatórios.' }] });
   }
   if (password.length < 6) {
     return res.status(400).json({ errors: [{ msg: 'A senha precisa ter pelo menos 6 caracteres.' }] });
   }
-  // Validação para os favoritos (opcional, mas bom)
   if (!Array.isArray(favoriteBookIds) || favoriteBookIds.length !== 2 || !favoriteBookIds.every(id => Number.isInteger(id) && id > 0)) {
     return res.status(400).json({ errors: [{ msg: 'É necessário selecionar exatamente 2 livros favoritos válidos.' }] });
   }
@@ -147,11 +143,9 @@ router.post('/register', async (req, res) => {
         }
     }
 
-    // <<< LÓGICA PARA SALVAR GÊNEROS FAVORITOS ADICIONADA AQUI >>>
     if (favoriteGenreIds && favoriteGenreIds.length > 0) {
         console.log(`Registrando ${favoriteGenreIds.length} gêneros favoritos para userId ${userId}`);
         for (const genreId of favoriteGenreIds) {
-            // Adicionar verificação se genreId existe na tabela 'genres'
             const genreExists = await client.query('SELECT id FROM genres WHERE id = $1', [genreId]);
             if (genreExists.rows.length > 0) {
                 const insertFavGenreQuery = `
@@ -166,11 +160,50 @@ router.post('/register', async (req, res) => {
         }
     }
 
-    // Envio de Email de Confirmação
     const confirmationToken = userId;
     const confirmationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-email/${confirmationToken}`;
-    const emailHtml = `... (seu HTML do email) ...`;
-    await sendEmail(email, 'Confirmação de Cadastro - A PÁGINA', emailHtml);
+    const emailHtml = `
+      <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
+        <div style="text-align: center; margin-bottom: 25px;">
+          {/* <img src="mais pra frente colocar a url aq" style="max-width: 150px;"/> */}
+          <h1 style="color: #002f6c; font-size: 28px;">Bem-vindo(a) à OnLivro, ${username}!</h1>
+        </div>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #333;">
+          Obrigado por se cadastrar na <strong>OnLivro</strong>, sua nova plataforma online para descobrir, explorar e se apaixonar por livros!
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #333;">
+          Aqui, você encontrará um vasto catálogo e, com base nos seus gostos e livros favoritos (como os que você indicou no cadastro!), nosso sistema inteligente irá te ajudar a encontrar suas próximas grandes leituras.
+        </p>
+        <p style="font-size: 16px; line-height: 1.6; color: #333;">
+          Para começar, por favor, confirme seu endereço de e-mail clicando no botão abaixo:
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${confirmationLink}" 
+             style="display: inline-block; padding: 12px 25px; background-color: #ffcc00; color: #002f6c; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+            Confirmar Meu E-mail
+          </a>
+        </div>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #333;">
+          Se o botão não funcionar, copie e cole o seguinte link no seu navegador:
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #007bff; word-break: break-all;">${confirmationLink}</p>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #555; margin-top: 25px;">
+          Se você não criou esta conta, por favor, ignore este e-mail.
+        </p>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
+        
+        <p style="font-size: 12px; color: #777; text-align: center;">
+          Atenciosamente,<br>
+          Equipe OnLivro
+        </p>
+      </div>
+    `;
+    await sendEmail(email, 'Confirmação de Cadastro - OnLivro', emailHtml);
 
     await client.query('COMMIT');
     res.status(201).json({ msg: 'Usuário cadastrado com sucesso. Verifique seu e-mail para confirmar a conta.' });
@@ -184,9 +217,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// --- ROTA DE CONFIRMAÇÃO DE EMAIL ---
 router.get('/confirm/:token', async (req, res) => {
-    // ... seu código existente para confirmar email ...
 });
 
 module.exports = router;
